@@ -1,8 +1,10 @@
-addons:
-  artifacts: true
-env:
-  ARTIFACTS_KEY=(AWS access key id)
-  ARTIFACTS_SECRET=(AWS secret access key)
-  ARTIFACTS_BUCKET=(S3 bucket name)
 language: csharp
 solution: GenRPG.sln
+deploy:
+  api_key:
+    secure: D5yjNwy8vKlCZZDa7QgkKthZKrMS39RXrwj1ebXQO75mQOm5TurtWrvaQus75l7+ZVwfWKANcarqHXk+pCyakXnOKTZYVICSyWPYwlfZyUXf/YyJFKyhcQCfLQMdoHbpwxBmu6aTDhZaHtQMP/4BsHK9j6zf+3GWJ1vXdlKambabGY+Cug3SK1Zm2Pvl+vP78pHlzuLwXLBlg+nb7epkXwBNCUG/BhWgw1QWq7JLXk0VEa5+2NRzzHBq28oQeFOs4EfswgnjADkxO1lluSTT3bEm7dV+quWQFKD7+hGPy9YQnM1neHgnPARsuzd0ZMWnlSRiy2tsVFzO9W8m7tPmVH51XpNm774gIUVEwyijRziyBypiMhDMH4OHPLWkrGSjQPXIQn3RFupYrX+9C9/qe7YwsawxiTszoDKumkmjBfJ2pw+gPDIEWQuBYLRqran/2SM0iTnG8l2QragUtHPY4updHNnyR83/2Pz4V/mJVNpHelGwVKPcdDTQsoYlodSnY8gpCsuzIlTxuAi+jIre1vDYRQ8ta+c2q04+r0uqoELjQc5oq4m22WXnVLuelOrhknBRachfvr0JWRzdcEmyiKdjnjyVeUM2yaARSZ6HNXTaWtT1GZJsDIeenyGHepkcfHPxRp93GlTsjMLUuSVm3bD4wy5JCXq9k52jLgpr9r0=
+  provider: releases
+  file: "FILE TO UPLOAD"
+  skip_cleanup: true
+  on:
+    tags: true
