@@ -298,11 +298,7 @@ namespace GenRPG
 		static bool isMono;
 		//Tripped if the user acceses the hidden file flush system
 		static bool FlushData = false;
-		//Thread for background entity generation
-		static ThreadStart EntGenTreadStart;
-		static Thread EntGenThreadObj;
 		//Tripped if entity generation is finished
-		static bool EntGenFin = false;
 		//Number of towns generated
 		static int Towns = 1;
 		//Temporary entity list (used by realtime entity generation)
@@ -422,23 +418,6 @@ namespace GenRPG
 			Console.SetCursorPosition(Pos.x, Pos.y);
 		}
 		#region Game
-		static void EntGenThread()
-		{
-			int TempCount;
-			NewGen:
-			TempEntList.Clear ();
-			TempCount = GenRand.Next (6, 17+(int)(FetchCoord(1).x*FetchCoord(1).y)/FetchCoord(1).x);
-			while (TempCount != 0) {
-				TempEntList.Add (new EntInf (CharStats));
-				TempCount--;
-				Thread.Sleep (231);
-			}
-			EntGenFin = true;
-			while (EntGenFin) {
-				Thread.Sleep (100);
-			}
-			goto NewGen;
-		}
 		static Coord FetchCoord(int ID)
 		{
 			Coord Out;
@@ -531,8 +510,6 @@ namespace GenRPG
 			LogThreadObj = new Thread (LogThreadStart);
 			TitleThreadStart = new ThreadStart (TitleThread);
 			TitleThreadObj = new Thread (TitleThreadStart);
-			EntGenTreadStart = new ThreadStart (EntGenThread);
-			EntGenThreadObj = new Thread (EntGenTreadStart);
 			//Checks for logging directory
 			if (!Directory.Exists (LogDir)) {
 				Directory.CreateDirectory (LogDir);
@@ -572,27 +549,12 @@ namespace GenRPG
 			//Title sequence
 			Log ("Running title sequence");
 			TitleThreadObj.Start ();
+			Random TitleColorGenerator = new Random(Guid.NewGuid().GetHashCode());
 			while (!TitleKP) {
-				Console.ForegroundColor = ConsoleColor.Yellow;
+				Console.ForegroundColor = (ConsoleColor)TitleColorGenerator.Next(1, 15);
 				Console.SetCursorPosition (TitleRand.Next (0, FetchCoord(1).x), TitleRand.Next (0, FetchCoord(1).y));
 				Console.WriteLine ("GenRPG");
-				Console.ForegroundColor = ConsoleColor.Red;
-				Console.SetCursorPosition (TitleRand.Next (0, FetchCoord(1).x), TitleRand.Next (0, FetchCoord(1).y));
-				if (Stable) {
-					Console.WriteLine ("STABLE");
-				} else {
-					Console.WriteLine ("UNSTABLE");
-				}
-				Console.ForegroundColor = ConsoleColor.Green;
-				Console.SetCursorPosition (TitleRand.Next (0, FetchCoord(1).x), TitleRand.Next (0, FetchCoord(1).y));
-				if (isMono) {
-					Console.WriteLine ("Mono");
-				} else {
-					Console.WriteLine (".NET Framework");
-				}
-				Console.ForegroundColor = ConsoleColor.Blue;
-				Console.SetCursorPosition (TitleRand.Next (0, FetchCoord(1).x), TitleRand.Next (0, FetchCoord(1).y));
-				Console.WriteLine ("RGenSTUDIOS");
+				Thread.Sleep(1);
 			}
 			if (FlushData) {
 				Console.Clear ();
@@ -609,6 +571,19 @@ namespace GenRPG
 			Console.WriteLine ("Press any key to continue...");
 			Console.ReadKey (true);
 			Console.Clear ();
+			Console.WriteLine("1. Start Game");
+			Console.WriteLine("2. Exit");
+		InvalidKey_mainmenu:
+			switch (Console.ReadKey(true).KeyChar)
+			{
+				case '1':
+					break;
+				case '2':
+					return;
+				default:
+					goto InvalidKey_mainmenu;
+			}
+			Console.Clear();
 			//Ask for the name of the charater being created
 			Console.WriteLine ("Enter your character's name:");
 			DeclineName:
@@ -631,13 +606,6 @@ namespace GenRPG
                         Console.WriteLine("Name declined by user, enter a new name:");
                         goto DeclineName;
                     }
-                case 'd':
-                    {
-                        Log("Character name set to default");
-                        Console.WriteLine("Character name is Flo from Progressive");
-                        CharName = "Flo from Progressive";
-                        break;
-                    }
                 default:
                     {
                         goto InvalidKey_nameentry;
@@ -646,7 +614,7 @@ namespace GenRPG
             Thread.Sleep(1200);
             Console.Clear();
 			//Asks the player to enter the desired gender for the in-game character
-			Console.WriteLine ("What is your character's gender? (m (Male), f (Female), r (Random))");
+			Console.WriteLine ("What is your character's gender? (m (Male), f (Female))");
             InvalidKey_genderentry:
             switch (Console.ReadKey (true).KeyChar) {
 			case 'm':
@@ -663,27 +631,6 @@ namespace GenRPG
 					Log ("Character gender set to female!");
 					Console.WriteLine ("Character gender set to female!");
 					Thread.Sleep (1000);
-					break;
-				}
-			case 'r':
-				{
-					IncorrectRand:
-					switch (GenRand.Next (0, 3)) {
-					case 1:
-						CharGender = Gender.Male;
-						Log ("Character gender set to male");
-						Console.WriteLine ("Character gender set to male!");
-						Thread.Sleep (1000);
-						break;
-					case 2:
-						CharGender = Gender.Female;
-						Log ("Character gender set to female!");
-						Console.WriteLine ("Character gender set to female!");
-						Thread.Sleep (1000);
-						break;
-					default:
-						goto IncorrectRand;
-					}
 					break;
 				}
 			default:
@@ -884,7 +831,6 @@ namespace GenRPG
 			CharHP = CharStats.Health;
 			CharStamina = CharStats.Stamina;
 			//Preface
-			EntGenThreadObj.Start();
 			Console.Clear ();
 			Console.ForegroundColor = ConsoleColor.Green;
 			Console.WriteLine ("Use WASD to move!");
@@ -894,7 +840,9 @@ namespace GenRPG
 			Console.Clear ();
 			Console.WriteLine ("CHAPTER I: IN A LAND OF GREEN");
 			Console.WriteLine ("Preface:");
-			Console.WriteLine ("This chapter is located in the land of Ironcrest, a land that you have lived in all your life. Being an orphan (your parents were killed by the shadows of Zerion, a soul-eating demon who uses shadows as an army. His army of shadows controls 90% of the known planet, and these shadows are occupying your homeland. You have built a plucidium wall around your house, the only known material that can repel shadows), you must go on a quest to get revenge on Zerion for killing the only two people on the planet that you have ever loved. You've been trained by Master Milo, who taught you how to counter the arts of the shadow race. Master Milo was brutally murdered by Zerion, and it is up to you to defeat him, since you are the last known being in the universe that can counter shadows.\nYou, {0},\nmust journey to the depths of Gargon, a fiery wasteland that's full of shadows \nof all sizes, shapes, and brutality, where Zerion is wating for you...", CharName);
+			ConsoleWriter.Write("This chapter is located in the land of Ironcrest, a land that you have lived in all your life. Being an orphan (your parents were killed by the shadows of Zerion, a soul-eating demon who possesses an army of shadows. His army of shadows controls 90% of the known planet, and these shadows are occupying your homeland. You have built a plucidium wall around your house, the only known material that can repel shadows), you must go on a quest to get revenge on Zerion for killing the only two people on the planet that you have ever loved. You've been trained by Master Milo to counter the arts of the shadow race. Master Milo was brutally murdered by Zerion, and it is up to you to defeat him, since you are the last known being in the universe that can counter shadows.");
+			Console.Write("\n\n"); 
+			ConsoleWriter.Write($"You, {CharName}, must journey to the depths of Gargon, a fiery wasteland that's full of shadows of all sizes, shapes, and brutality, where Zerion is wating for you...");
 			Console.ReadKey (true);
 			Console.ForegroundColor = ConsoleColor.DarkGreen;
 			Console.Clear ();
@@ -932,13 +880,13 @@ namespace GenRPG
 					Console.Clear();
 					Console.BackgroundColor = ConsoleColor.Black;
 					Console.SetCursorPosition(0, 1);
-					WCount = Console.BufferWidth;
+					WCount = Console.BufferWidth-1;
 					while (WCount >= 0) {
 						Console.Write ('-');
 						WCount--;
 					}
 					Console.SetCursorPosition(0, (FetchCoord(1).y-1));
-					WCount = Console.BufferWidth;
+					WCount = Console.BufferWidth-1;
 					while (WCount >= 0) {
 						Console.Write ('-');
 						WCount--;
@@ -1002,8 +950,13 @@ namespace GenRPG
 					LoadingMap = true;
 				} else {
 					do {
-						StartMov:
-						Console.Clear ();
+					StartMov:
+						Console.Clear();
+						if (LoadingMap)
+						{
+							Console.SetCursorPosition(0, 2);
+							Console.Write("Loading Map...");
+						}
 						if (PlaneList [PMCoord].Size.x != Console.BufferWidth || PlaneList [PMCoord].Size.y != Console.BufferHeight) {
 								PlaneList.Remove (PMCoord);
 								Console.SetCursorPosition (0, 0);
@@ -1015,13 +968,13 @@ namespace GenRPG
 						}
 						Console.ForegroundColor = ConsoleColor.White;
 						Console.SetCursorPosition (0, 1);
-						WCount = Console.BufferWidth;
+						WCount = Console.BufferWidth-1;
 						while (WCount >= 0) {
 							Console.Write ('-');
 							WCount--;
 						}
 						Console.SetCursorPosition (0, (FetchCoord (1).y - 1));
-						WCount = Console.BufferWidth;
+						WCount = Console.BufferWidth-1;
 						while (WCount >= 0) {
 							Console.Write ('-');
 							WCount--;
@@ -1190,13 +1143,19 @@ namespace GenRPG
 							}
 						}
 						if (LoadingMap == true) {
-							while(!EntGenFin)
+							int TempCount;
+							TempEntList.Clear();
+							TempCount = GenRand.Next(6, 17 + (int) FetchCoord(1).y / 4);
+							while (TempCount != 0)
 							{
-								Thread.Sleep(100);
+								TempEntList.Add(new EntInf(CharStats));
+								TempCount--;
+								Thread.Sleep(231);
 							}
 							EntList = TempEntList;
-							EntGenFin = false;
 							LoadingMap=false;
+							Console.SetCursorPosition(0, 2);
+							Console.Write("              ");
 						}
 						foreach (SpecTile DrTile in PlaneList[PMCoord].SpecialTiles) {
 							Console.ForegroundColor = DrTile.TileColor;
@@ -1340,7 +1299,6 @@ namespace GenRPG
 			//End of program
 			Exit:
 			LogThreadObj.Abort();
-			EntGenThreadObj.Abort ();
 			TitleThreadObj.Abort ();
 			return;
 		}
