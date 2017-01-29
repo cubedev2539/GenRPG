@@ -35,6 +35,10 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ConsoleWriter.cs" />
+    <Compile Include="Entity.cs" />
+    <Compile Include="ConsoleHelper.cs" />
+    <Compile Include="Plane.cs" />
+    <Compile Include="SpecialTile.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
