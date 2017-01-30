@@ -35,7 +35,7 @@ namespace GenRPG
 			}
 			if (ManipulatedText != string.Empty)
 				Lines.Add(ManipulatedText);
-		PrintString:
+			PrintString:
 			foreach (string line in Lines)
 				Console.WriteLine(line);
 		}
